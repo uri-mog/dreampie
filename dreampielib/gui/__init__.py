@@ -1149,6 +1149,9 @@ class DreamPie(SimpleGladeApp):
     
     def on_unfold_last(self, _widget):
         self.folding.unfold_last()
+        
+    def on_clear(self,_widget):        
+        self.output.write("\n"*40,tag_names="stdout")
 
     # Notebook tabs
     
