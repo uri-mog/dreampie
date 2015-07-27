@@ -688,7 +688,7 @@ class Subprocess(object):
         return self.split_list(ids, all_set)
     
     @rpc_func
-    def complete_filenames(self, str_prefix, text, str_char, add_quote):
+    def complete_filenames(self, str_prefix, text, str_char, add_quote, max_filenames_to_complete):
         is_raw = 'r' in str_prefix.lower()
         is_unicode = 'u' in str_prefix.lower()
         try:
@@ -719,48 +719,49 @@ class Subprocess(object):
             dirlist.sort()
         public = []
         private = []
-        for name in dirlist:
-            orig_name = name
-            if not py3k:
-                if is_unicode and isinstance(name, str):
-                    # A filename which can't be unicode
-                    continue
-                if not is_unicode:
-                    # We need a unicode string as the code. From what I see,
-                    # Python evaluates unicode characters in byte strings as utf-8.
-                    try:
-                        name = name.decode('utf8')
-                    except UnicodeDecodeError:
+        if len(dirlist)<=max_filenames_to_complete:            
+            for name in dirlist:
+                orig_name = name
+                if not py3k:
+                    if is_unicode and isinstance(name, str):
+                        # A filename which can't be unicode
                         continue
-            # skip troublesome names
-            try:
-                rename = eval(str_prefix + name + str_char)
-            except (SyntaxError, UnicodeDecodeError):
-                continue
-            if rename != orig_name:
-                continue
-
-            is_dir = os.path.isdir(os.path.join(comp_what, orig_name))
-
-            if not is_dir:
-                if add_quote:
-                    name += str_char
-            else:
-                if '/' in text or os.path.sep == '/':
-                    # Prefer forward slash
-                    name += '/'
+                    if not is_unicode:
+                        # We need a unicode string as the code. From what I see,
+                        # Python evaluates unicode characters in byte strings as utf-8.
+                        try:
+                            name = name.decode('utf8')
+                        except UnicodeDecodeError:
+                            continue
+                # skip troublesome names
+                try:
+                    rename = eval(str_prefix + name + str_char)
+                except (SyntaxError, UnicodeDecodeError):
+                    continue
+                if rename != orig_name:
+                    continue
+    
+                is_dir = os.path.isdir(os.path.join(comp_what, orig_name))
+    
+                if not is_dir:
+                    if add_quote:
+                        name += str_char
                 else:
-                    if not is_raw:
-                        name += '\\\\'
+                    if '/' in text or os.path.sep == '/':
+                        # Prefer forward slash
+                        name += '/'
                     else:
-                        name += '\\'
-
-            if name.startswith('.'):
-                private.append(name)
-            else:
-                public.append(name)
+                        if not is_raw:
+                            name += '\\\\'
+                        else:
+                            name += '\\'
+    
+                if name.startswith('.'):
+                    private.append(name)
+                else:
+                    public.append(name)
         
-        return public, private, case_insen_filenames
+        return public, private, case_insen_filenames, len(dirlist)
     
     @staticmethod
     def get_welcome():

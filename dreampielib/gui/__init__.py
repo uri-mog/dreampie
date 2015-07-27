@@ -122,6 +122,9 @@ LINE_LEN = 80
 # Time to wait before autocompleting, to see if the user continues to type
 AUTOCOMPLETE_WAIT = 400
 
+# Do not try to show auto completion for more than this number of files 
+MAX_FILENAMES_TO_COMPLETE = 100
+
 # Time to wait for the subprocess for a result. The subprocess may be doing
 # idle jobs, and so not return a result.
 SUBP_WAIT_TIMEOUT_S = .5
@@ -1248,8 +1251,13 @@ class DreamPie(SimpleGladeApp):
         return self.call_subp_catch(u'get_module_members', expr)
     
     def complete_filenames(self, str_prefix, text, str_char, add_quote):
-        return self.call_subp_catch(u'complete_filenames', str_prefix, text, str_char,
-                                    add_quote)
+        public, private, case_insen_filenames, num_filenames =\
+                        self.call_subp_catch(u'complete_filenames', str_prefix, text, str_char,
+                                                        add_quote,MAX_FILENAMES_TO_COMPLETE)
+        if num_filenames>MAX_FILENAMES_TO_COMPLETE:
+            msg = "Too large directory ({} files), could not autocomplete.".format(num_filenames)            
+            self.status_bar.set_status(_(msg))
+        return public, private, case_insen_filenames             
 
     def on_show_calltip(self, _widget):
         self.call_tips.show(is_auto=False)
