@@ -1251,13 +1251,17 @@ class DreamPie(SimpleGladeApp):
         return self.call_subp_catch(u'get_module_members', expr)
     
     def complete_filenames(self, str_prefix, text, str_char, add_quote):
-        public, private, case_insen_filenames, num_filenames =\
-                        self.call_subp_catch(u'complete_filenames', str_prefix, text, str_char,
+        res = self.call_subp_catch(u'complete_filenames', str_prefix, text, str_char,
                                                         add_quote,MAX_FILENAMES_TO_COMPLETE)
-        if num_filenames>MAX_FILENAMES_TO_COMPLETE:
-            msg = "Too large directory ({} files), could not autocomplete.".format(num_filenames)            
-            self.status_bar.set_status(_(msg))
-        return public, private, case_insen_filenames             
+        
+        if res is not None:
+            num_filenames = res[-1]
+            res = res[:-1]
+            if num_filenames>MAX_FILENAMES_TO_COMPLETE:
+                msg = "Too large directory ({} files), could not autocomplete.".format(num_filenames)            
+                self.status_bar.set_status(_(msg))
+        
+        return res             
 
     def on_show_calltip(self, _widget):
         self.call_tips.show(is_auto=False)
