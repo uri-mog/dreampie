@@ -184,6 +184,10 @@ class Subprocess(object):
         # Mask SIGINT/Ctrl-C
         mask_sigint()
         
+        # Become a process group leader
+        if sys.platform != 'win32':
+            os.setpgrp()
+        
         # Make sys.displayhook change self.last_res
         self.last_res = None
         sys.displayhook = self.displayhook
@@ -993,6 +997,8 @@ class Qt4Handler(GuiHandler):
         if self.QtCore is None:
             if 'PyQt4' in sys.modules:
                 self.QtCore = sys.modules['PyQt4'].QtCore
+            elif 'PyQt5' in sys.modules:
+                self.QtCore = sys.modules['PyQt5'].QtCore
             elif 'PySide' in sys.modules:
                 self.QtCore = sys.modules['PySide'].QtCore
             else:
